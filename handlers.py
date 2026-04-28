@@ -479,11 +479,19 @@ def handle_goalcheck(config: dict, token: str, chat_id: str) -> None:
 # ── Router ────────────────────────────────────────────────────────────────────
 
 HELP_TEXT = (
-    "Available commands:\n\n"
-    "/pushtask — schedule all pending tasks into your calendar\n"
-    "/pushevent YYYY-MM-DD HH:MM HH:MM description — add a personal event\n"
-    "/newgoal &lt;goal&gt; — decompose a new goal and save to Sheet\n"
-    "/goalcheck — status summary of all goals"
+    "🤖 <b>Goal Planner Bot</b>\n\n"
+    "<b>/newgoal &lt;goal&gt;</b>\n"
+    "Create and decompose a new goal into tasks.\n"
+    "Example: /newgoal Learn Spanish in 3 months\n\n"
+    "<b>/pushtask</b>\n"
+    "Schedule all pending tasks into your Google Calendar.\n\n"
+    "<b>/pushevent YYYY-MM-DD HH:MM HH:MM description</b>\n"
+    "Add a personal event to your calendar.\n"
+    "Example: /pushevent 2026-05-02 14:00 16:00 Doctor appointment\n\n"
+    "<b>/goalcheck</b>\n"
+    "See progress summary of all your goals.\n\n"
+    "<b>/help</b>\n"
+    "Show this message."
 )
 
 
@@ -512,5 +520,7 @@ def handle_update(update: dict) -> None:
             handle_newgoal(config, token, chat_id, args)
     elif command == "/goalcheck":
         handle_goalcheck(config, token, chat_id)
+    elif command in ("/help", "/start"):
+        send(token, chat_id, HELP_TEXT)
     else:
         send(token, chat_id, HELP_TEXT)
