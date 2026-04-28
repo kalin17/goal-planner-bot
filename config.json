@@ -1,0 +1,67 @@
+{
+  "telegram_token": "8673252390:AAF4qMCgsrPao7YpcVdCq0QbzQGKV8r3iWE",
+  "telegram_chat_id": "6454075025",
+  "credentials_path": "C:\\Users\\User\\.claude\\ardes-automation-0db1c561d58e.json",
+  "anthropic_api_key": "",
+  "sheet_id": "1TUjMzMrLn0xLMH-4hr_C7lZVdAZNo4xcmgFH7ychduY",
+  "calendar_id": "blusharkiszebest@gmail.com",
+  "timezone": "Europe/Sofia",
+  "min_task_gap_minutes": 5,
+  "schedule": {
+    "monday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "12:30"},
+        {"start": "17:40", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    },
+    "tuesday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "13:30"},
+        {"start": "19:15", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    },
+    "wednesday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "13:30"},
+        {"start": "18:30", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    },
+    "thursday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "13:30"},
+        {"start": "18:30", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    },
+    "friday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "13:30"},
+        {"start": "17:40", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    },
+    "saturday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "13:30"},
+        {"start": "17:00", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    },
+    "sunday": {
+      "windows": [
+        {"start": "00:00", "end": "05:00"},
+        {"start": "12:00", "end": "20:00"},
+        {"start": "21:30", "end": "23:59"}
+      ]
+    }
+  }
+}
