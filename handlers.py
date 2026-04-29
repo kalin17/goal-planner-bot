@@ -152,6 +152,24 @@ def parse_window_time(time_str: str, day: date, tz) -> datetime:
     return tz.localize(datetime.combine(day, dtime(h, m)))
 
 
+def find_next_session(cursor: datetime, schedule: dict, tz) -> tuple:
+    """Return (session_start, session_end) for the next upcoming work window."""
+    for _ in range(365):
+        day_name = cursor.strftime("%A").lower()
+        day_sched = schedule.get(day_name)
+        if day_sched:
+            windows = sorted([
+                (parse_window_time(w["start"], cursor.date(), tz),
+                 parse_window_time(w["end"],   cursor.date(), tz))
+                for w in day_sched.get("windows", [])
+            ])
+            for w_start, w_end in windows:
+                if w_end > cursor:
+                    return max(cursor, w_start), w_end
+        cursor = tz.localize(datetime.combine((cursor + timedelta(days=1)).date(), dtime(0, 0)))
+    return None, None
+
+
 def fetch_busy(service, calendar_id: str, t_min: datetime, t_max: datetime) -> list:
     body = {"timeMin": t_min.isoformat(), "timeMax": t_max.isoformat(), "items": [{"id": calendar_id}]}
     result = service.freebusy().query(body=body).execute()
@@ -219,9 +237,16 @@ def handle_pushtask(config: dict, token: str, chat_id: str) -> None:
         tz = pytz.timezone(config["timezone"])
         gap = timedelta(minutes=config.get("min_task_gap_minutes", 5))
 
-        max_weeks = max((mg["deadline_weeks"] for mg in all_mgs), default=12)
+        cursor = round_up_15(datetime.now(tz))
+
+        # Find the next work session and limit scheduling to it
+        session_start, session_end = find_next_session(cursor, config["schedule"], tz)
+        if not session_start:
+            send(token, chat_id, "No upcoming work session found in your schedule.")
+            return
+
         horizon_start = tz.localize(datetime.combine(date.today(), dtime(0, 0)))
-        horizon_end   = tz.localize(datetime.combine(date.today() + timedelta(weeks=max_weeks + 2), dtime(23, 59)))
+        horizon_end   = session_end
         busy = fetch_busy(cal, config["calendar_id"], horizon_start, horizon_end)
 
         sorted_mgs = topological_sort(all_mgs)
@@ -230,9 +255,10 @@ def handle_pushtask(config: dict, token: str, chat_id: str) -> None:
 
         sorted_tasks = sorted(pending, key=lambda t: (mg_order.get(t["mg_id"], 999), t["order"]))
 
-        cursor = round_up_15(datetime.now(tz))
+        cursor = session_start
         mg_last_end: dict[str, datetime] = {}
         created_lines = []
+        skipped = 0
 
         for task in sorted_tasks:
             mg = mg_lookup.get(task["mg_id"], {})
@@ -243,8 +269,10 @@ def handle_pushtask(config: dict, token: str, chat_id: str) -> None:
                     cursor = dep_end
 
             slot_start, slot_end = find_slot(cursor, task["estimated_hours"], config["schedule"], busy, tz)
-            if not slot_start:
-                send(token, chat_id, f"⚠️ Could not find a slot for '{task['title']}'")
+
+            # Stop if the slot is outside this session
+            if not slot_start or slot_end > session_end:
+                skipped += 1
                 continue
 
             cursor = slot_end + gap
@@ -266,9 +294,10 @@ def handle_pushtask(config: dict, token: str, chat_id: str) -> None:
             mg_last_end[task["mg_id"]] = cursor
             created_lines.append(f"• {task['title']} — {slot_start.strftime('%d %b %H:%M')}")
 
-        summary = f"✅ Scheduled {len(created_lines)} tasks:\n\n" + "\n".join(created_lines[:20])
-        if len(created_lines) > 20:
-            summary += f"\n…and {len(created_lines) - 20} more"
+        session_label = f"{session_start.strftime('%d %b %H:%M')}–{session_end.strftime('%H:%M')}"
+        summary = f"✅ Scheduled {len(created_lines)} tasks for <b>{session_label}</b>:\n\n" + "\n".join(created_lines[:20])
+        if skipped:
+            summary += f"\n\n⏳ {skipped} task(s) didn't fit — run /pushtask again before your next session."
         send(token, chat_id, summary)
 
     except Exception as e:
